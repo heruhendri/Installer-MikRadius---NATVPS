@@ -27,9 +27,9 @@ Mendukung Multi Domain, Multi Radius, dan Firewall Security.
 ## Cara pakai (single-command)
 ```bash
 # clone repo lalu jalankan
-git clone https://github.com/USER/REPO.git
-cd REPO
-sudo bash install-mikradius-ultimate.sh
+git clone https://github.com/heruhendri/Installer-MikRadius---NATVPS/tree/main.git
+cd Installer-MikRadius---NATVPS
+sudo bash install-mikradius-manual.sh
 ````
 
 
