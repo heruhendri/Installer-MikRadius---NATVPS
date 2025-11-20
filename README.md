@@ -12,14 +12,24 @@ Mendukung Multi Domain, Multi Radius, dan Firewall Security.
 - Hardening Firewall (UFW)
 - Auto detect OS (Ubuntu 20/22/24)
 - Fully NATVPS Compatible
-
+- HTTPS otomatis via Certbot (Apache plugin)
+- Basic UFW hardening (allow 22,80,443,1812/udp,1813/udp)
+- Support multi-domain (opsional)
+- Helper notes untuk menambahkan multi-radius instance (manual step)
 ---
+## Persyaratan
+- VPS dengan akses root (sudo)
+- DNS A record: `(subdomain.domain)` → IP VPS
+- Port 80 & 443 terbuka (untuk Certbot)
+- Sistem operasi: Ubuntu 20.04 / 22.04 / 24.04 (tested)
 
 ## 🚀 Cara Install
-Copy-paste command ini di VPS:
-
+## Cara pakai (single-command)
 ```bash
-bash <(curl -s https://raw.githubusercontent.com/USER/REPO/main/install-mikradius.sh)
+# clone repo lalu jalankan
+git clone https://github.com/USER/REPO.git
+cd REPO
+sudo bash install-mikradius-ultimate.sh
 ````
 
 
