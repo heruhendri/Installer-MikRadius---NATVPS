@@ -19,44 +19,53 @@ sleep 2
 
 # Update & dependencies
 apt update -y
-apt upgrade -y
-apt install -y nginx mariadb-server php php-fpm php-mysql php-xml php-gd php-curl php-mbstring php-pear php-db certbot python3-certbot-nginx git unzip freeradius freeradius-mysql freeradius-utils ufw
+apt install -y nginx mariadb-server php php-fpm php-mysql php-xml php-gd php-curl php-mbstring php-pear php-db git unzip freeradius freeradius-mysql freeradius-utils certbot python3-certbot-nginx ufw
 
-# Firewall
-ufw allow OpenSSH
-ufw allow http
-ufw allow https
+# Firewall (hindari duplikasi)
+ufw allow OpenSSH >/dev/null 2>&1
+ufw allow http >/dev/null 2>&1
+ufw allow https >/dev/null 2>&1
 echo "y" | ufw enable
 
-# Setup MariaDB
+# Database
 mysql -u root <<EOF
+DROP DATABASE IF EXISTS radius;
 CREATE DATABASE radius;
 GRANT ALL PRIVILEGES ON radius.* TO 'radius'@'localhost' IDENTIFIED BY '$DBPASS';
 FLUSH PRIVILEGES;
 EOF
 
-# Import radius schema
-mysql -u root radius < /etc/freeradius/3.0/mods-config/sql/main/mysql/schema.sql
+# Lokasi schema FreeRADIUS benar (Ubuntu 22.04/24.04)
+mysql -u root radius < /usr/share/freeradius/sql/mysql/schema.sql
 
-# Aktifkan SQL di FreeRADIUS
-ln -s /etc/freeradius/3.0/mods-available/sql /etc/freeradius/3.0/mods-enabled/
+# Enable SQL module dengan cara baru
+cp /etc/freeradius/3.0/mods-available/sql /etc/freeradius/3.0/mods-enabled/sql
 
-# Edit SQL config
+# Edit config SQL
+sed -i "s|driver = \"rlm_sql_null\"|driver = \"rlm_sql_mysql\"|g" /etc/freeradius/3.0/mods-enabled/sql
+sed -i "s|dialect = \"sqlite\"|dialect = \"mysql\"|g" /etc/freeradius/3.0/mods-enabled/sql
+
 sed -i "s|login = \"radius\"|login = \"radius\"|g" /etc/freeradius/3.0/mods-enabled/sql
 sed -i "s|password = \"radpass\"|password = \"$DBPASS\"|g" /etc/freeradius/3.0/mods-enabled/sql
 
-# Restart FreeRADIUS
+# Restart Radius
 systemctl restart freeradius
-systemctl enable freeradius
 
 # Install DaloRADIUS
 cd /var/www/
+if [ -d "daloradius" ]; then
+    rm -rf daloradius
+fi
+
 git clone https://github.com/lirantal/daloradius.git
 cd daloradius
+
+# Konfigurasi DaloRADIUS
 cp library/daloradius.conf.php.sample library/daloradius.conf.php
+
 sed -i "s|\$configValues\['CONFIG_DB_PASS'\] = ''|\$configValues['CONFIG_DB_PASS'] = '$DBPASS'|g" library/daloradius.conf.php
 
-# Set permission
+# Permission
 chown -R www-data:www-data /var/www/daloradius
 
 # Nginx config
@@ -79,13 +88,14 @@ server {
 }
 EOF
 
-ln -s /etc/nginx/sites-available/mikradius.conf /etc/nginx/sites-enabled/
-rm /etc/nginx/sites-enabled/default
+# Replace if exists
+ln -sf /etc/nginx/sites-available/mikradius.conf /etc/nginx/sites-enabled/
 
+# Restart Nginx
 systemctl restart nginx
 
-# HTTPS Certbot
-certbot --nginx -d $DOMAIN --email $EMAIL --agree-tos --redirect
+# HTTPS Non-Interactive
+certbot --nginx -d $DOMAIN --email $EMAIL --agree-tos --no-eff-email --redirect --non-interactive
 
 echo "=========================================="
 echo "  Instalasi MikRadius Selesai!"
