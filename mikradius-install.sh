@@ -36,7 +36,7 @@ FLUSH PRIVILEGES;
 EOF
 
 # Lokasi schema FreeRADIUS benar (Ubuntu 22.04/24.04)
-mysql -u root radius < /usr/share/freeradius/sql/mysql/schema.sql
+mysql -u root radius < /etc/freeradius/3.0/mods-config/sql/main/mysql/schema.sql
 
 # Enable SQL module dengan cara baru
 cp /etc/freeradius/3.0/mods-available/sql /etc/freeradius/3.0/mods-enabled/sql
